@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doble Luna Records</title>
+    
+    <link rel="icon" type="image/png" href="logo.png">
+
+    <style>
+        /* --- ESTILOS BASE Y ESTRUCTURA --- */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100%;
+            overflow-x: hidden;
+            overflow-y: auto;
+            /* AJUSTE: fondo.jpg activo desde el inicio */
+            background-color: #4a4a4a;
+            background-image: url('fondo.jpg') !important;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            transition: background 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* --- FONDOS INDEPENDIENTES --- */
+        body.view-studio {
+            background-image: url('Gemini_Generated_Image_vk5pu8vk5pu8vk5p.png') !important;
+            background-size: cover !important;
+            background-position: 40% 38% !important; 
+            background-repeat: no-repeat !important;
+            background-attachment: fixed !important;
+        }
+
+        /* El modo contacto hereda fondo.jpg */
+        body.view-contacto {
+            background-image: url('fondo.jpg') !important;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4); /* Capa sutil para resaltar letras blancas */
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        header {
+            width: 95%;
+            max-width: 1200px;
+            margin: 40px auto 10px auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            /* AJUSTE: Letras en blanco para el header */
+            color: #ffffff;
+            z-index: 100;
+            transition: all 0.8s ease;
+            position: relative;
+        }
+
+        .header-main-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 20px;
+        }
+
+        /* LOGO COMO BOTÓN DE INICIO */
+        .logo-link {
+            text-decoration: none;
+            color: inherit;
+            transition: transform 0.3s ease;
+        }
+        .logo-link:hover { transform: scale(1.02); }
+
+        .logo-box {
+            background-color: #C9242B; 
+            color: white;
+            padding: 15px 25px;
+            font-family: "Arial Black", Gadget, sans-serif;
+            font-size: 42px;
+            font-weight: 900;
+            letter-spacing: -2px;
+            line-height: 0.85;
+            text-transform: uppercase;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            outline: none;
+        }
+
+        .model-info-block {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+        }
+
+        .nav-container {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .nav-btn {
+            background: #1a1a1a;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .nav-btn:hover, .nav-btn.active { background: #C9242B; }
+
+        .model-text {
+            font-family: "Arial Black", Gadget, sans-serif;
+            font-size: 64px;
+            font-weight: 900;
+            margin: 0;
+            line-height: 1;
+            letter-spacing: -3px;
+            text-transform: uppercase;
+            color: #ffffff; /* Letras blancas */
+        }
+
+        .model-subtitle {
+            font-size: 18px;
+            font-weight: normal;
+            display: block;
+            letter-spacing: 5px;
+            margin-top: 5px;
+            color: #ffffff; /* Letras blancas */
+            text-transform: uppercase;
+        }
+
+        .description-para {
+            max-width: 700px;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #ffffff; /* Letras blancas */
+            margin-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.3);
+            padding-top: 15px;
+            text-align: center;
+            z-index: 101;
+        }
+
+        /* AJUSTE: Letras blancas detrás de la máquina (Servicios) */
+        .face-back text, .face-back tspan, .face-back .label-tech {
+            fill: #ffffff !important;
+            color: #ffffff !important;
+        }
+
+        .main-layout {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 95%;
+            max-width: 1400px;
+            margin: 0 auto;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            min-height: 800px;
+        }
+
+        /* --- CONTENEDOR DE LA MÁQUINA (10% MÁS PEQUEÑO) --- */
+        .contenedor-maquina {
+            perspective: 2500px;
+            width: 100%;
+            max-width: 1008px; /* Reducción del 10% aplicada */
+            padding-bottom: 100px;
+            transition: all 0.5s ease-in-out;
+            z-index: 50;
+        }
+
+        body.view-studio .contenedor-maquina, 
+        body.view-contacto .contenedor-maquina {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .manual-view .contenedor-maquina {
+            width: 33.33%;
+            transform: scale(0.85);
+            transform-origin: center left;
+        }
+
+        .machine-card {
+            width: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .machine-card.flipped { transform: rotateY(180deg); }
+
+        .face {
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            filter: drop-shadow(0 80px 70px rgba(0,0,0,0.65));
+        }
+
+        .face-front { position: relative; z-index: 2; transform: rotateY(0deg); }
+        .face-back { position: absolute; top: 0; left: 0; z-index: 1; transform: rotateY(180deg); }
+
+        svg { width: 100%; height: auto; display: block; }
+
+        /* --- MENÚ MONITOR ESTUDIO --- */
+        #monitor-menu-estudio {
+            position: absolute;
+            top: 15%; 
+            left: 49.8%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.6s ease;
+            z-index: 200;
+            text-align: left;
+            min-width: 200px;
+        }
+
+        body.view-studio #monitor-menu-estudio {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .lista-monitor {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .lista-monitor li { margin-bottom: 8px; }
+
+        .lista-monitor a {
+            color: white;
+            text-decoration: none;
+            font-family: "Arial Black", sans-serif;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            display: inline-block;
+            background: rgba(0,0,0,0.6);
+            padding: 5px 12px;
+            border-left: 3px solid #C9242B;
+        }
+
+        .lista-monitor a:hover {
+            color: #C9242B;
+            background: white;
+            transform: translateX(5px);
+        }
+
+        /* --- SECCIÓN CONTACTO --- */
+        #seccion-contacto {
+            display: none;
+            width: 100%; 
+            gap: 100px;  
+            z-index: 300;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+            align-items: flex-start;
+            max-height: 650px;
+            overflow: hidden;
+            position: absolute;
+            top: 0%;
+            justify-content: center;
+        }
+
+        body.view-contacto #seccion-contacto {
+            display: flex;
+            opacity: 1;
+        }
+
+        .col-calendario {
+            width: 1000px; 
+            background: #000;
+            padding: 0;
+            border: 2px solid #C9242B;
+            overflow: hidden;
+            height: 600px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .col-info {
+            width: 350px; 
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            /* AJUSTE: Letras en blanco para contacto */
+            color: #ffffff;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            height: 600px;
+            box-sizing: border-box;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+
+        .form-contacto {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .form-contacto input, .form-contacto textarea {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid #444;
+            padding: 10px;
+            color: white;
+            font-size: 12px;
+            outline: none;
+        }
+
+        .form-contacto button {
+            background: #C9242B;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-family: "Arial Black", sans-serif;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        .info-detalle-editable {
+            font-size: 13px;
+            line-height: 1.6;
+            border-top: 1px solid #C9242B;
+            padding-top: 15px;
+            outline: none;
+        }
+
+        .info-detalle-editable div {
+            margin-bottom: 5px;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        /* --- REVISTA / MANUAL --- */
+        .manual-view .magazine-container {
+            display: flex;
+            opacity: 1;
+            transform: translateX(0);
+            width: 66.66%;
+            pointer-events: auto;
+        }
+
+        .magazine-container {
+            display: none;
+            opacity: 0;
+            width: 0;
+            height: 850px;
+            background: #fdfaf0;
+            border: 1px solid #ccc;
+            box-shadow: 20px 20px 60px rgba(0,0,0,0.3);
+            transform: translateX(100px);
+            transition: all 0.8s ease;
+            position: relative;
+            pointer-events: none;
+            z-index: 70;
+        }
+
+        .magazine-page {
+            flex: 1;
+            padding: 40px;
+            border-right: 1px solid #eee;
+            overflow-y: auto;
+            color: #333;
+            font-family: "Georgia", serif;
+        }
+
+        .manual-title {
+            font-family: "Arial Black", Gadget, sans-serif;
+            border-bottom: 2px solid #C9242B;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            color: #1a1a1a;
+        }
+
+        .index-link {
+            display: block;
+            margin-bottom: 15px;
+            border-bottom: 1px dotted #ccc;
+            text-decoration: none;
+            color: inherit;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: "Georgia", serif;
+        }
+
+        .manual-buttons-container {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .example-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #C9242B;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 4px;
+            font-family: sans-serif;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .example-link:hover {
+            background: #1a1a1a;
+            transform: scale(1.05);
+        }
+
+        /* --- MEDIA QUERIES (ADAPTACIÓN MÓVIL) --- */
+        @media (max-width: 1024px) {
+            #seccion-contacto {
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+                position: relative;
+                max-height: none;
+                top: 0;
+            }
+            .col-calendario { width: 95%; height: 400px; }
+            .col-info { width: 95%; height: auto; }
+            .header-main-row { flex-direction: column; gap: 15px; }
+            .model-text { font-size: 38px; }
+            .logo-box { font-size: 28px; }
+            .manual-view .magazine-container { width: 100%; flex-direction: column; height: auto; }
+        }
+
+        /* --- ANIMACIONES REELS --- */
+        .reel-anim { transform-origin: center; transform-box: fill-box; }
+        .playing .reel-anim { animation: girar var(--speed-duration, 4s) linear infinite; }
+        @keyframes girar { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .needle-group { transform-origin: 150px 100px; transform: rotate(-30deg); will-change: transform; }
+        
+        /* MODAL Y EDITABLES */
+        #modal-pass {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1a1a;
+            border: 2px solid #C9242B;
+            padding: 30px;
+            z-index: 1000;
+            color: white;
+            text-align: center;
+        }
+
+        .editable-active {
+            border: 2px dashed #C9242B !important;
+            background: rgba(201, 36, 43, 0.1) !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="modal-pass">
+        <div style="font-weight: bold; letter-spacing: 2px;">TECHNICAL ACCESS</div>
+        <input type="password" id="pass-input" placeholder="PASSCODE" style="background:#000; color:#C9242B; border:1px solid #444; padding:10px; margin:15px 0; width:100%; text-align:center;">
+        <div style="display:flex; gap:10px;">
+            <button class="nav-btn" onclick="checkPass()" style="flex:1">OK</button>
+            <button class="nav-btn" onclick="closeModal()" style="flex:1; background:#444;">ESC</button>
+        </div>
+    </div>
+
+    <header id="main-header">
+        <div class="header-main-row">
+            <a href="#" class="logo-link">
+                <div class="logo-box editable" contenteditable="false">Doble Luna<br>Records</div>
+            </a>
+            <div class="model-info-block">
+                <nav class="nav-container">
+                    <a href="#servicios" class="nav-btn" id="btn-servicios">Servicios</a>
+                    <a href="#estudio" class="nav-btn" id="btn-estudio">Estudio</a>
+                    <a href="#contacto" class="nav-btn" id="btn-contacto">Contacto</a>
+                </nav>
+                <h1 class="model-text editable" contenteditable="false">DL-2026</h1>
+                <span class="model-subtitle editable" contenteditable="false">Stereo Master Recorder</span>
+            </div>
+        </div>
+        <p class="description-para editable" contenteditable="false">
+            Doble Luna Records es un estudio ubicado en Quito, Ecuador. Especializado en grabación y tracking de instrumentos, voz y locución. 
+    </header>
+
+    <div class="main-layout" id="layout-wrapper">
+        
+        <div id="monitor-menu-estudio">
+            <ul class="lista-monitor">
+                <li><a href="#">_lista de equipo</a></li>
+                <li><a href="#">_quienes somos</a></li>
+                <li><a href="#">_fotos</a></li>
+                <li><a href="#">_dosier</a></li>
+            </ul>
+        </div>
+
+        <div id="seccion-contacto">
+            <div class="col-calendario">
+                <iframe src="https://calendar.google.com/calendar/embed?src=doblelunarecordsuio%40gmail.com&ctz=America%2FGuayaquil&mode=WEEK&showPrint=0&showTabs=0&showCalendars=0&showTz=0&showTitle=0&showNav=1" style="border: 0" width="100%" height="100%" frameborder="0" scrolling="no"></iframe>
+            </div>
+            <div class="col-info">
+                <h2 class="manual-title" style="margin-top:0; font-size:16px; color:#fff;">BOOKING / CONTACTO</h2>
+                <form class="form-contacto" action="https://formspree.io/f/xqeeawbk" method="POST">
+                    <input type="text" name="nombre" placeholder="NOMBRE / PROYECTO" required>
+                    <input type="email" name="email" placeholder="EMAIL DE CONTACTO" required>
+                    <textarea name="mensaje" placeholder="DETALLES DEL SERVICIO" rows="4" required></textarea>
+                    <button type="submit">ENVIAR SOLICITUD</button>
+                </form>
+                <div class="info-detalle-editable editable" contenteditable="false">
+                    <div>_DIRECCION: Martin de Utreras y Mariana de Jesús, Quito, Ecuador</div>
+                    <div>_TELEFONO: +593 979270062</div>
+                    <div>_EMAIL: doblelunarecordsuio@gmail.com</div>
+                    <div style="margin-top:10px; color:#C9242B; font-size:11px;">_TU MENSAJE SERÁ ENVIADO DIRECTAMENTE AL ESTUDIO.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="contenedor-maquina" id="machine-container"></div>
+
+        <div class="magazine-container" id="magazine">
+            <div class="magazine-page">
+                <h2 class="manual-title">ÍNDICE DE SERVICIOS</h2>
+                <div id="manual-index"></div>
+                <button class="nav-btn" onclick="location.hash=''" style="width:100%; margin-top: 50px;">VOLVER A LA MÁQUINA</button>
+            </div>
+            <div class="magazine-page">
+                <h2 class="manual-title">ESPECIFICACIONES</h2>
+                <div id="manual-content">
+                    <h3 id="m-title" class="editable" contenteditable="false">Seleccione un servicio</h3>
+                    <p id="m-desc" class="editable" contenteditable="false">Información técnica sobre el procesamiento analógico seleccionado.</p>
+                    <div id="m-price" class="editable" contenteditable="false" style="color:#C9242B; font-weight:bold; font-size:24px;">---</div>
+                    <div class="manual-buttons-container">
+                        <a href="#" id="m-link" class="example-link editable" contenteditable="false">VER VIDEO EJEMPLO</a>
+                        <a href="#contacto" id="m-book" class="example-link editable" contenteditable="false">RESERVAR AHORA</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="layout.js"></script>
+
+    <script>
+        function handleNavigation() {
+            const hash = window.location.hash;
+            const card = document.querySelector('.machine-card');
+            
+            document.body.classList.remove('view-studio', 'view-contacto');
+            document.getElementById('btn-servicios').classList.remove('active');
+            document.getElementById('btn-estudio').classList.remove('active');
+            document.getElementById('btn-contacto').classList.remove('active');
+
+            if (document.body.classList.contains('manual-view')) {
+                if (typeof toggleManual === 'function') toggleManual();
+            }
+
+            if (hash === '#servicios') {
+                if (card) card.classList.add('flipped');
+                document.getElementById('btn-servicios').classList.add('active');
+            } 
+            else if (hash === '#estudio') {
+                if (card) card.classList.remove('flipped');
+                document.body.classList.add('view-studio');
+                document.getElementById('btn-estudio').classList.add('active');
+            } 
+            else if (hash === '#contacto') {
+                if (card) card.classList.remove('flipped');
+                document.body.classList.add('view-contacto');
+                document.getElementById('btn-contacto').classList.add('active');
+            }
+            else {
+                if (card) card.classList.remove('flipped');
+            }
+        }
+
+        window.addEventListener('hashchange', handleNavigation);
+        window.addEventListener('load', handleNavigation);
+        document.getElementById('machine-container').style.zIndex = "50";
+    </script>
+</body>
+</html>
