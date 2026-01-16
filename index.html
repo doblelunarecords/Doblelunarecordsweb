@@ -481,6 +481,117 @@
             border: 2px dashed #C9242B !important;
             background: rgba(201, 36, 43, 0.1) !important;
         }
+        /* --- CONFIGURACIÓN QUIRÚRGICA PARA MÓVIL --- */
+@media (max-width: 1024px) {
+
+    /* 1. EL HEADER: Creamos una cuadrícula de 3 áreas */
+    .header-main-row {
+        display: grid !important;
+        /* 'logo' y 'titulo' arriba a la izquierda y derecha */
+        /* 'sub' debajo del título, al lado del logo */
+        /* 'botones' ocupando todo el ancho al final */
+        grid-template-areas: 
+            "logo titulo"
+            "logo sub"
+            "botones botones" !important;
+        grid-template-columns: auto 1fr !important;
+        gap: 5px 15px !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    /* Asignamos cada pieza a su área para que NO se monten */
+    .logo-link { 
+        grid-area: logo !important; 
+    }
+
+    /* Liberamos los hijos del contenedor para moverlos individualmente */
+    .model-info-block { 
+        display: contents !important; 
+    }
+
+    .model-text { 
+        grid-area: titulo !important; 
+        font-size: 24px !important; 
+        margin: 0 !important;
+        text-align: left !important;
+        align-self: end !important; /* Lo pega a la base */
+    }
+
+    .model-subtitle { 
+        grid-area: sub !important; 
+        font-size: 10px !important;
+        margin: 0 !important;
+        text-align: left !important;
+        align-self: start !important; /* Lo pega al inicio de su área */
+        letter-spacing: 1px !important;
+    }
+
+    /* Los botones en su propio contenedor abajo */
+    .nav-container {
+        grid-area: botones !important;
+        display: flex !important;
+        justify-content: center !important;
+        width: 100% !important;
+        margin-top: 20px !important;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* 2. MÁQUINA: -150px arriba y tamaño REAL */
+    .contenedor-maquina {
+        transform: translateY(-150px) !important; 
+        max-width: 100% !important;
+        padding-bottom: 0 !important;
+    }
+
+    /* 3. CONTACTO: 150% de ancho y centrado */
+    #seccion-contacto {
+        flex-direction: column !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+
+    /* 4. REVISTA: Stack Vertical (Revista arriba, Máquina abajo) */
+    .manual-view .main-layout {
+        flex-direction: column !important;
+    }
+    .manual-view .magazine-container {
+        width: 100% !important;
+        order: 1 !important;
+        height: auto !important;
+        margin-bottom: 20px !important;
+        transform: none !important;
+    }
+    .manual-view .contenedor-maquina {
+        order: 2 !important;
+        transform: translateY(0) !important; /* Reset de posición al leer */
+    }
+
+    /* 3. CONTACTO: 150% de ancho y centrado matemático */
+    #seccion-contacto {
+        flex-direction: column !important;
+        align-items: center !important;
+        width: 100% !important;
+        padding: 0 !important;
+        overflow: visible !important;
+    }
+
+    .col-calendario, .col-info {
+        /* Ancho del 150% centrado con margen negativo */
+        width: 120% !important; 
+        margin-left: 30% !important; 
+        height: auto !important;
+        box-sizing: border-box !important;
+        border: 2px solid #C9242B !important;
+    }
+
+    .col-calendario { height: 400px !important; }
+    .col-info { 
+        color: #ffffff !important;
+        background: rgba(0, 0, 0, 0.9) !important;
+    }
+}
     </style>
 </head>
 <body>
