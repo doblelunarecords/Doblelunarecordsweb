@@ -242,80 +242,106 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 1. Guardar datos en Firebase
     async function saveAllData() {
-        const dataToSave = {};
+    const dataToSave = {
+        textosFijos: {},
+        servicios: []
+    };
 
-        // Guardar elementos HTML normales (los que tienen clase .editable)
-        document.querySelectorAll('.editable').forEach((el, index) => {
-            const id = el.id || 'editable-' + index; // Usamos ID o un índice
-            dataToSave[id] = el.innerHTML;
-        });
+    // 1. Guardamos los textos con ID (Título, Subtítulo, etc.)
+    document.querySelectorAll('.editable[id]').forEach((el) => {
+        dataToSave.textosFijos[el.id] = el.innerHTML;
+    });
 
-        // Guardar textos dentro del SVG
-        document.querySelectorAll('.svg-editable').forEach((el, index) => {
-            const id = 'svg-' + index;
-            dataToSave[id] = el.textContent;
-        });
+    // 2. Guardamos los textos del logo (SVG)
+    const logoTexts = document.querySelectorAll('.svg-editable');
+    dataToSave.logo1 = logoTexts[0]?.textContent || "Doble Luna";
+    dataToSave.logo2 = logoTexts[1]?.textContent || "Records";
 
-        try {
-            await window.fsSetDoc(window.fsDoc(window.db, "configuracion", "textos"), dataToSave);
-            console.log("Datos guardados en Firebase correctamente");
-        } catch (e) {
-            console.error("Error al guardar:", e);
-        }
+    // 3. Guardamos la LISTA COMPLETA de servicios
+    document.querySelectorAll('.service-item-back').forEach((el) => {
+        dataToSave.servicios.push(el.textContent);
+    });
+
+    try {
+        await window.fsSetDoc(window.fsDoc(window.db, "configuracion", "textos"), dataToSave);
+        console.log("¡Todo guardado en Firebase!");
+    } catch (e) {
+        console.error("Error al guardar:", e);
     }
+}
 
     // 2. Cargar datos desde Firebase
     async function loadAllData() {
-        try {
-            const docSnap = await window.fsGetDoc(window.fsDoc(window.db, "configuracion", "textos"));
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                
-                // Cargar en HTML
-                document.querySelectorAll('.editable').forEach((el, index) => {
-                    const id = el.id || 'editable-' + index;
-                    if (data[id]) el.innerHTML = data[id];
-                });
-
-                // Cargar en SVG
-                document.querySelectorAll('.svg-editable').forEach((el, index) => {
-                    const id = 'svg-' + index;
-                    if (data[id]) el.textContent = data[id];
-                });
-                
-                console.log("Datos cargados desde Firebase");
-                if(typeof updateManualIndex === 'function') updateManualIndex();
+    try {
+        const docSnap = await window.fsGetDoc(window.fsDoc(window.db, "configuracion", "textos"));
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            
+            // 1. Cargar textos fijos (Título, Subtítulo...)
+            for (let id in data.textosFijos) {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = data.textosFijos[id];
             }
-        } catch (e) {
-            console.error("Error al cargar:", e);
+
+            // 2. Cargar textos del logo
+            const logoTexts = document.querySelectorAll('.svg-editable');
+            if(data.logo1 && logoTexts[0]) logoTexts[0].textContent = data.logo1;
+            if(data.logo2 && logoTexts[1]) logoTexts[1].textContent = data.logo2;
+
+            // 3. Cargar SERVICIOS (Limpiar y reconstruir la lista)
+            if (data.servicios && data.servicios.length > 0) {
+                const list = document.getElementById('services-list-back');
+                list.innerHTML = ""; // Borramos los genéricos
+
+                data.servicios.forEach((texto, index) => {
+                    const newY = index * 40;
+                    const newText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    newText.setAttribute("y", newY);
+                    newText.setAttribute("class", "service-item-back svg-editable");
+                    newText.textContent = texto;
+                    
+                    // Hacer que el nuevo texto sea editable al hacer clic
+                    newText.onclick = function() {
+                        if (editMode) {
+                            let newVal = prompt("EDITAR SERVICIO:", this.textContent);
+                            if (newVal !== null) {
+                                this.textContent = newVal;
+                                saveAllData();
+                                updateManualIndex(); // Actualiza la revista también
+                            }
+                        }
+                    };
+                    list.appendChild(newText);
+                });
+            }
+            
+            console.log("¡Datos cargados y lista de servicios actualizada!");
+            updateManualIndex(); // Actualizamos la revista (manual) al final
         }
+    } catch (e) {
+        console.error("Error al cargar:", e);
     }
+}
 
     // --- MODIFICACIÓN DE TOGGLEEDIT ---
     function toggleEdit(on) {
-        editMode = on;
-        document.querySelectorAll('.editable').forEach(el => el.contentEditable = on);
-        
-        if(on) {
-            document.querySelectorAll('.editable').forEach(el => el.classList.add('editable-active'));
-        } else {
-            document.querySelectorAll('.editable').forEach(el => el.classList.remove('editable-active'));
-            // ¡IMPORTANTE! Cuando apagamos el modo edición, guardamos.
-            saveAllData(); 
-        }
+    editMode = on;
+    // Activamos edición en elementos normales
+    document.querySelectorAll('.editable').forEach(el => {
+        el.contentEditable = on;
+        if(on) el.classList.add('editable-active');
+        else el.classList.remove('editable-active');
+    });
 
-        document.getElementById('btn-add-cat').style.display = on ? 'block' : 'none';
-        
-        document.querySelectorAll('.svg-editable').forEach(txt => {
-            txt.onclick = on ? function() {
-                let newVal = prompt("EDITAR TEXTO:", this.textContent);
-                if(newVal !== null) {
-                    this.textContent = newVal;
-                    saveAllData(); // Guardar inmediatamente al cambiar texto de SVG
-                }
-            } : null;
-        });
+    // Mostrar/ocultar botón de añadir categoría
+    const btnAdd = document.getElementById('btn-add-cat');
+    if(btnAdd) btnAdd.style.display = on ? 'block' : 'none';
+
+    // Si apagamos la edición, guardamos todo
+    if(!on) {
+        saveAllData();
     }
+}
 
     // --- LLAMAR A LA CARGA AL INICIAR ---
     // Agrega esto al final del bloque document.addEventListener('DOMContentLoaded', ...
