@@ -238,19 +238,88 @@ document.addEventListener('DOMContentLoaded', () => {
         else { alert("ERROR: CLAVE INCORRECTA"); closeModal(); }
     };
 
+    // --- NUEVAS FUNCIONES DE FIREBASE ---
+
+    // 1. Guardar datos en Firebase
+    async function saveAllData() {
+        const dataToSave = {};
+
+        // Guardar elementos HTML normales (los que tienen clase .editable)
+        document.querySelectorAll('.editable').forEach((el, index) => {
+            const id = el.id || 'editable-' + index; // Usamos ID o un índice
+            dataToSave[id] = el.innerHTML;
+        });
+
+        // Guardar textos dentro del SVG
+        document.querySelectorAll('.svg-editable').forEach((el, index) => {
+            const id = 'svg-' + index;
+            dataToSave[id] = el.textContent;
+        });
+
+        try {
+            await window.fsSetDoc(window.fsDoc(window.db, "configuracion", "textos"), dataToSave);
+            console.log("Datos guardados en Firebase correctamente");
+        } catch (e) {
+            console.error("Error al guardar:", e);
+        }
+    }
+
+    // 2. Cargar datos desde Firebase
+    async function loadAllData() {
+        try {
+            const docSnap = await window.fsGetDoc(window.fsDoc(window.db, "configuracion", "textos"));
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                
+                // Cargar en HTML
+                document.querySelectorAll('.editable').forEach((el, index) => {
+                    const id = el.id || 'editable-' + index;
+                    if (data[id]) el.innerHTML = data[id];
+                });
+
+                // Cargar en SVG
+                document.querySelectorAll('.svg-editable').forEach((el, index) => {
+                    const id = 'svg-' + index;
+                    if (data[id]) el.textContent = data[id];
+                });
+                
+                console.log("Datos cargados desde Firebase");
+                if(typeof updateManualIndex === 'function') updateManualIndex();
+            }
+        } catch (e) {
+            console.error("Error al cargar:", e);
+        }
+    }
+
+    // --- MODIFICACIÓN DE TOGGLEEDIT ---
     function toggleEdit(on) {
         editMode = on;
         document.querySelectorAll('.editable').forEach(el => el.contentEditable = on);
-        if(on) document.querySelectorAll('.editable').forEach(el => el.classList.add('editable-active'));
-        else document.querySelectorAll('.editable').forEach(el => el.classList.remove('editable-active'));
+        
+        if(on) {
+            document.querySelectorAll('.editable').forEach(el => el.classList.add('editable-active'));
+        } else {
+            document.querySelectorAll('.editable').forEach(el => el.classList.remove('editable-active'));
+            // ¡IMPORTANTE! Cuando apagamos el modo edición, guardamos.
+            saveAllData(); 
+        }
+
         document.getElementById('btn-add-cat').style.display = on ? 'block' : 'none';
+        
         document.querySelectorAll('.svg-editable').forEach(txt => {
             txt.onclick = on ? function() {
                 let newVal = prompt("EDITAR TEXTO:", this.textContent);
-                if(newVal) this.textContent = newVal;
+                if(newVal !== null) {
+                    this.textContent = newVal;
+                    saveAllData(); // Guardar inmediatamente al cambiar texto de SVG
+                }
             } : null;
         });
     }
+
+    // --- LLAMAR A LA CARGA AL INICIAR ---
+    // Agrega esto al final del bloque document.addEventListener('DOMContentLoaded', ...
+    loadAllData();
 
     window.addNewService = () => {
         const list = document.getElementById('services-list-back');
