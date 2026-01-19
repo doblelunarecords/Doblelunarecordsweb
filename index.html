@@ -718,5 +718,69 @@
         window.addEventListener('load', handleNavigation);
         document.getElementById('machine-container').style.zIndex = "50";
     </script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Tu configuración
+        const firebaseConfig = {
+            apiKey: "AIzaSyAhnBFyRPJJtzSvJtpkPyPHjxAlbZpYGGs",
+            authDomain: "doblelunarecords-354e4.firebaseapp.com",
+            projectId: "doblelunarecords-354e4",
+            storageBucket: "doblelunarecords-354e4.firebasestorage.app",
+            messagingSenderId: "49456487926",
+            appId: "1:49456487926:web:661b6b8b018f25c1abfbd7",
+            measurementId: "G-0L56N4NT1N"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Hacer 'db' y las funciones accesibles para layout.js
+        window.db = db;
+        window.fsSetDoc = setDoc;
+        window.fsGetDoc = getDoc;
+        window.fsDoc = doc;
+    </script>
+
+    <script src="layout.js"></script>
+
+    <script>
+        // Lógica de navegación (se queda igual)
+        function handleNavigation() {
+            const hash = window.location.hash;
+            const card = document.querySelector('.machine-card');
+            
+            document.body.classList.remove('view-studio', 'view-contacto');
+            document.getElementById('btn-servicios').classList.remove('active');
+            document.getElementById('btn-estudio').classList.remove('active');
+            document.getElementById('btn-contacto').classList.remove('active');
+
+            if (document.body.classList.contains('manual-view')) {
+                if (typeof toggleManual === 'function') toggleManual();
+            }
+
+            if (hash === '#servicios') {
+                if (card) card.classList.add('flipped');
+                document.getElementById('btn-servicios').classList.add('active');
+            } 
+            else if (hash === '#estudio') {
+                if (card) card.classList.remove('flipped');
+                document.body.classList.add('view-studio');
+                document.getElementById('btn-estudio').classList.add('active');
+            } 
+            else if (hash === '#contacto') {
+                if (card) card.classList.remove('flipped');
+                document.body.classList.add('view-contacto');
+                document.getElementById('btn-contacto').classList.add('active');
+            }
+            else {
+                if (card) card.classList.remove('flipped');
+            }
+        }
+        window.addEventListener('hashchange', handleNavigation);
+        window.addEventListener('load', handleNavigation);
+    </script>
 </body>
 </html>
