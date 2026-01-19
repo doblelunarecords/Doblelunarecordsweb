@@ -139,6 +139,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let audioCtx, source, analyser, dataArray, audioBuffer = null;
     let lastL = -30, lastR = -30;
     let editMode = false;
+    let servicesData = {}; // Aquí guardaremos la info de todos los servicios
+    let currentActiveService = ""; // Aquí recordaremos cuál estamos editando en la revista
 
     // Giro de la máquina
     btnServicios.addEventListener('click', () => {
@@ -238,86 +240,80 @@ document.addEventListener('DOMContentLoaded', () => {
         else { alert("ERROR: CLAVE INCORRECTA"); closeModal(); }
     };
 
-    // --- NUEVAS FUNCIONES DE FIREBASE ---
-
-    // 1. Guardar datos en Firebase
     async function saveAllData() {
-    const dataToSave = {
-        textosFijos: {},
-        servicios: []
-    };
+    const dataToSave = {};
 
-    // 1. Guardamos los textos con ID (Título, Subtítulo, etc.)
-    document.querySelectorAll('.editable[id]').forEach((el) => {
-        dataToSave.textosFijos[el.id] = el.innerHTML;
+    // 1. Guardar textos generales de la interfaz
+    document.querySelectorAll('.editable').forEach((el, index) => {
+        const id = el.id || 'editable-' + index;
+        dataToSave[id] = el.innerHTML;
     });
 
-    // 2. Guardamos los textos del logo (SVG)
-    const logoTexts = document.querySelectorAll('.svg-editable');
-    dataToSave.logo1 = logoTexts[0]?.textContent || "Doble Luna";
-    dataToSave.logo2 = logoTexts[1]?.textContent || "Records";
-
-    // 3. Guardamos la LISTA COMPLETA de servicios
-    document.querySelectorAll('.service-item-back').forEach((el) => {
-        dataToSave.servicios.push(el.textContent);
+    document.querySelectorAll('.svg-editable').forEach((el, index) => {
+        const id = 'svg-' + index;
+        dataToSave[id] = el.textContent;
     });
 
     try {
+        // 2. Guardar textos generales en el documento "textos"
         await window.fsSetDoc(window.fsDoc(window.db, "configuracion", "textos"), dataToSave);
-        console.log("¡Todo guardado en Firebase!");
+        
+        // 3. Guardar el mapa de todos los servicios en el documento "detalles_servicios"
+        await window.fsSetDoc(window.fsDoc(window.db, "configuracion", "detalles_servicios"), servicesData);
+        
+        console.log("Datos de servicios y generales guardados con éxito.");
     } catch (e) {
-        console.error("Error al guardar:", e);
+        console.error("Error al guardar en Firebase:", e);
     }
 }
 
-    // 2. Cargar datos desde Firebase
+// --- ESTO DEBE ESTAR SUELTO EN DOMContentLoaded, NO DENTRO DE OTRA FUNCIÓN ---
+['m-desc', 'm-price'].forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+        element.addEventListener('input', (e) => {
+            if (currentActiveService !== "") {
+                // Si este servicio no existe aún en nuestra lista, lo inicializamos
+                if (!servicesData[currentActiveService]) {
+                    servicesData[currentActiveService] = { desc: "", price: "", link: "#" };
+                }
+                
+                // Guardamos específicamente lo que escribes en la variable global
+                if (id === 'm-desc') servicesData[currentActiveService].desc = e.target.textContent;
+                if (id === 'm-price') servicesData[currentActiveService].price = e.target.textContent;
+                
+                console.log(`Actualizando memoria temporal para: ${currentActiveService}`);
+            }
+        });
+    }
+});
+
+   
+
     async function loadAllData() {
     try {
+        // Carga textos generales (lo que ya tenías)
         const docSnap = await window.fsGetDoc(window.fsDoc(window.db, "configuracion", "textos"));
         if (docSnap.exists()) {
             const data = docSnap.data();
-            
-            // 1. Cargar textos fijos (Título, Subtítulo...)
-            for (let id in data.textosFijos) {
-                const el = document.getElementById(id);
-                if (el) el.innerHTML = data.textosFijos[id];
-            }
-
-            // 2. Cargar textos del logo
-            const logoTexts = document.querySelectorAll('.svg-editable');
-            if(data.logo1 && logoTexts[0]) logoTexts[0].textContent = data.logo1;
-            if(data.logo2 && logoTexts[1]) logoTexts[1].textContent = data.logo2;
-
-            // 3. Cargar SERVICIOS (Limpiar y reconstruir la lista)
-            if (data.servicios && data.servicios.length > 0) {
-                const list = document.getElementById('services-list-back');
-                list.innerHTML = ""; // Borramos los genéricos
-
-                data.servicios.forEach((texto, index) => {
-                    const newY = index * 40;
-                    const newText = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                    newText.setAttribute("y", newY);
-                    newText.setAttribute("class", "service-item-back svg-editable");
-                    newText.textContent = texto;
-                    
-                    // Hacer que el nuevo texto sea editable al hacer clic
-                    newText.onclick = function() {
-                        if (editMode) {
-                            let newVal = prompt("EDITAR SERVICIO:", this.textContent);
-                            if (newVal !== null) {
-                                this.textContent = newVal;
-                                saveAllData();
-                                updateManualIndex(); // Actualiza la revista también
-                            }
-                        }
-                    };
-                    list.appendChild(newText);
-                });
-            }
-            
-            console.log("¡Datos cargados y lista de servicios actualizada!");
-            updateManualIndex(); // Actualizamos la revista (manual) al final
+            document.querySelectorAll('.editable').forEach((el, index) => {
+                const id = el.id || 'editable-' + index;
+                if (data[id]) el.innerHTML = data[id];
+            });
+            document.querySelectorAll('.svg-editable').forEach((el, index) => {
+                const id = 'svg-' + index;
+                if (data[id]) el.textContent = data[id];
+            });
         }
+
+        // NUEVO: Carga la base de datos de servicios específicos
+        const servSnap = await window.fsGetDoc(window.fsDoc(window.db, "configuracion", "detalles_servicios"));
+        if (servSnap.exists()) {
+            servicesData = servSnap.data();
+        }
+        
+        console.log("Datos cargados de Firebase");
+        if(typeof updateManualIndex === 'function') updateManualIndex();
     } catch (e) {
         console.error("Error al cargar:", e);
     }
@@ -325,23 +321,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- MODIFICACIÓN DE TOGGLEEDIT ---
     function toggleEdit(on) {
-    editMode = on;
-    // Activamos edición en elementos normales
-    document.querySelectorAll('.editable').forEach(el => {
-        el.contentEditable = on;
-        if(on) el.classList.add('editable-active');
-        else el.classList.remove('editable-active');
-    });
+        editMode = on;
+        document.querySelectorAll('.editable').forEach(el => el.contentEditable = on);
+        
+        if(on) {
+            document.querySelectorAll('.editable').forEach(el => el.classList.add('editable-active'));
+        } else {
+            document.querySelectorAll('.editable').forEach(el => el.classList.remove('editable-active'));
+            // ¡IMPORTANTE! Cuando apagamos el modo edición, guardamos.
+            saveAllData(); 
+        }
 
-    // Mostrar/ocultar botón de añadir categoría
-    const btnAdd = document.getElementById('btn-add-cat');
-    if(btnAdd) btnAdd.style.display = on ? 'block' : 'none';
-
-    // Si apagamos la edición, guardamos todo
-    if(!on) {
-        saveAllData();
+        document.getElementById('btn-add-cat').style.display = on ? 'block' : 'none';
+        
+        document.querySelectorAll('.svg-editable').forEach(txt => {
+            txt.onclick = on ? function() {
+                let newVal = prompt("EDITAR TEXTO:", this.textContent);
+                if(newVal !== null) {
+                    this.textContent = newVal;
+                    saveAllData(); // Guardar inmediatamente al cambiar texto de SVG
+                }
+            } : null;
+        });
     }
-}
 
     // --- LLAMAR A LA CARGA AL INICIAR ---
     // Agrega esto al final del bloque document.addEventListener('DOMContentLoaded', ...
@@ -366,22 +368,36 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     function updateManualIndex() {
-        const indexDiv = document.getElementById('manual-index');
-        const backServices = document.querySelectorAll('.service-item-back');
-        if(!indexDiv) return;
-        indexDiv.innerHTML = "";
-        backServices.forEach((s) => {
-            const item = document.createElement('div');
-            item.className = "index-link";
-            item.textContent = s.textContent;
-            item.onclick = () => {
-                document.getElementById('m-title').textContent = s.textContent;
-                document.getElementById('m-desc').textContent = "Especificaciones detalladas para " + s.textContent;
-                document.getElementById('m-price').textContent = "$100.00";
+    const indexDiv = document.getElementById('manual-index');
+    const backServices = document.querySelectorAll('.service-item-back');
+    if(!indexDiv) return;
+    indexDiv.innerHTML = "";
+
+    backServices.forEach((s) => {
+        const item = document.createElement('div');
+        item.className = "index-link";
+        item.textContent = s.textContent;
+
+        item.onclick = () => {
+            const serviceName = s.textContent;
+            currentActiveService = serviceName; // Establecemos el servicio actual
+
+            // Intentamos sacar la info de servicesData, si no existe usamos el genérico
+            const info = servicesData[serviceName] || { 
+                desc: "Sin descripción aún. Haz clic en AC POWER para editar.", 
+                price: "---", 
+                link: "#" 
             };
-            indexDiv.appendChild(item);
-        });
-    }
+
+            // Ponemos la info en los campos del manual
+            document.getElementById('m-title').textContent = serviceName;
+            document.getElementById('m-desc').textContent = info.desc;
+            document.getElementById('m-price').textContent = info.price;
+            if(document.getElementById('m-link')) document.getElementById('m-link').href = info.link;
+        };
+        indexDiv.appendChild(item);
+    });
+}
 
     // Drag and Drop
     document.body.addEventListener('dragover', e => e.preventDefault());
